@@ -1,0 +1,25 @@
+@import '~antd/dist/antd.css';
+body{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.login-form{
+    display: flex;
+    justify-content:center;
+    align-items:center;
+}
+#root{
+    display: flex;
+    justify-content: center;
+}
+.button_submit{
+    width: 233.33px;
+}
+/* 下面的样式是调整注册弹窗的样式的 */
+.ant-modal-content{
+    height:600px
+}
+.ant-modal-footer{
+    margin-right: 72px;
+}
