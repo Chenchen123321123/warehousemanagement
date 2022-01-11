@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Form, Input, Modal, Button, Avatar, Typography,Card,Checkbox,Select } from 'antd';
-import { SmileOutlined, UserOutlined } from '@ant-design/icons';
+import { Form, Input, Modal, Button,Card,Checkbox,Select } from 'antd';
 import '../static/css/login.css';
+import md5 from 'js-md5';
+import http from '../utils/server';
 const layout = {
   labelCol: {
     span: 6,
@@ -40,14 +41,52 @@ const ModalForm = ({ visible, onCancel }) => {
   const onOk = () => {
     form.submit();
   };
+  //验证登录名
+  const loginidValidator = (rule, value, callback) => {
+    const validatorEmail = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+    const validatorTell = /1[0-9]{10}/;
+    if (value) {
+      if (validatorTell.test(value) || validatorEmail.test(value)) { 
+        return Promise.resolve()
+      } else {
+        return Promise.reject('请输入正确的手机号码或者邮箱！');
+      }
+    } else {
+      //这里的callback函数会报错
+    }
+  }
+  //验证密码
+  const confirmPasswordValidator = (rule, value, callback) => {
+    const { getFieldValue } = form;
+    let password = getFieldValue('password');
+    if (value) {
+      if (password===value) { 
+        return Promise.resolve()
+      } else {
+        return Promise.reject('两次输入的密码不一致！');
+      }
+    } else {
+      return Promise.reject('请再次输入密码！');
+    }
+  }
+   //验证密码
+   const passwordValidator = (rule, value, callback) => {
+    if (value) {
+      return Promise.resolve()
+    } else {
+      return Promise.reject('请输入密码！');
+    }
+  }
   return (
-      <Modal title="Basic Drawer" visible={visible} onOk={onOk} onCancel={onCancel}>
+      <Modal title="Basic Drawer" visible={visible} onOk={onOk} onCancel={onCancel}  okText="注册" cancelText="取消">
         <Form form={form}  name="userForm"    labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
             <Form.Item name="register_login_id" label="账号"
                 rules={[
                         {
                         required: true, message: '请输入邮箱/手机号!' 
-                        },
+                        }, {
+                          validator: loginidValidator
+                        }
                     ]}
                 >
                 <Input />
@@ -55,13 +94,13 @@ const ModalForm = ({ visible, onCancel }) => {
             <Form.Item name="register_username" label="姓名"
                 rules={[
                         {
-                        required: true, message: '请输入邮箱/手机号!' 
-                        },
+                        required: true, message: '请输用户姓名!' 
+                        }
                     ]}
                 >
                 <Input />
             </Form.Item>
-            <Form.Item name="register_sex" label="性别" rules={[{ required: true }]}>
+            <Form.Item name="register_sex" label="性别" rules={[{ required: true, message: '请选择性别!'  }]}>
                   <Select
                     placeholder="请选择性别"
                     allowClear
@@ -73,7 +112,7 @@ const ModalForm = ({ visible, onCancel }) => {
             <Form.Item name="password" label="密码"
                 rules={[
                     {
-                    required: true,message: '请输入密码!' 
+                        validator: passwordValidator
                     },
                 ]}
                 >
@@ -82,7 +121,11 @@ const ModalForm = ({ visible, onCancel }) => {
             <Form.Item
                   label="确认密码"
                   name="confirm_password"
-                  rules={[{ required: true, message: '请再次确认密码！' }]}
+                  rules={[ 
+                    {
+                    validator: confirmPasswordValidator
+                    }
+                  ]}
                 >
                   <Input.Password />
             </Form.Item>
@@ -110,14 +153,13 @@ const Login = () => {
     <div className="login-form">
         <Card title="登录" style={{ width: 400 }}>
             <Form.Provider
-            onFormFinish={(name, { values, forms }) => {
+            onFormFinish={async (name, { values, forms }) => {
                 if (name === 'userForm') {
-                const { basicForm } = forms;
-                const users = basicForm.getFieldValue('users') || [];
-                basicForm.setFieldsValue({
-                    users: [...users, values],
-                });
-                setVisible(false);
+                  let params = values;
+                  params.password = md5(values.password);
+                  const res = await http.post('/register',params);
+                  console.log(res);
+                  setVisible(false);
                 }
             }}
             >
@@ -146,28 +188,6 @@ const Login = () => {
                 </Form.Item>
                 <Form.Item name="remember" valuePropName="checked" wrapperCol={{ offset: 6, span: 16 }}>
                     <Checkbox>记住密码</Checkbox>
-                </Form.Item>
-                <Form.Item
-                label="User List"
-                shouldUpdate={(prevValues, curValues) => prevValues.users !== curValues.users}
-                >
-                {({ getFieldValue }) => {
-                    const users = getFieldValue('users') || [];
-                    return users.length ? (
-                    <ul>
-                        {users.map((user, index) => (
-                        <li key={index} className="user">
-                            <Avatar icon={<UserOutlined />} />
-                            {user.name} - {user.age}
-                        </li>
-                        ))}
-                    </ul>
-                    ) : (
-                    <Typography.Text className="ant-form-text" type="secondary">
-                        ( <SmileOutlined /> No user yet. )
-                    </Typography.Text>
-                    );
-                }}
                 </Form.Item>
                 <Form.Item {...tailLayout}>
                     <Button htmlType="submit" type="primary" className='button_submit'>
