@@ -157,6 +157,7 @@ const Login = () => {
                 if (name === 'userForm') {
                   let params = values;
                   params.password = md5(values.password);
+                  params.register_password = md5(values.password);
                   const res = await http.post('/register',params);
                   console.log(res);
                   setVisible(false);
